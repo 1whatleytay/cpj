@@ -1,0 +1,100 @@
+module name links... {
+	cmake = (template 'CMakeLists.txt') {
+		'name': name
+		'includes': ''
+		'sources': ''
+		'links': links
+	}
+
+	cmake_module_template = template 'CMakeLists.module.txt'
+	modules = parse (read 'CMakeLists.txt') cmake_module_template 'modules'
+	modules = '${modules}\nadd_subdirectory(${name})'
+
+	cmake_module = cmake_module_template {
+		'modules': modules
+	}
+
+	write cmake_module 'CMakeLists.txt'
+
+	directory name
+
+	write cmake '${name}/CMakeLists.txt'
+	directory '${name}/src'
+	directory '${name}/include/${name}'
+}
+
+cmake_add include source {
+	cmake_template = template 'CMakeLists.txt'
+    lists = read 'CMakeLists.txt'
+
+	module_name = parse lists cmake_template 'name'
+	includes = parse lists cmake_template 'includes'
+	sources = parse lists cmake_template 'sources'
+	links = parse lists cmake_template 'links'
+
+	includes = '${includes}\n    ${include}'
+	sources = '${sources}\n    ${source}'
+
+    cmake = cmake_template {
+        'name': module_name
+        'includes': includes
+        'sources': sources
+        'links': links
+    }
+
+	write cmake 'CMakeLists.txt'
+}
+
+add name {
+	include_path = 'include/${module_name}/${name}.h'
+	src_path = 'src/${name}.cpp'
+
+    cmake_add include_path src_path
+
+	include_template = template 'include.h'
+	src_template = (template 'source.cpp') {
+		'name': name
+		'module': module_name
+	}
+
+	write include_template include_path
+	write src_template src_path
+}
+
+parser name {
+	include_path = 'include/${module_name}/${name}.h'
+	src_path = 'src/${name}.cpp'
+
+	cmake_add include_path src_path
+
+	real_name = lowercase name
+	capital_first_letter = uppercase (substr name 0 1)
+	lowercase_rest_name = substr name 1 (s (size name) 1
+	capital_name = '${capital_first_letter}${lowercase_rest_name)}'
+
+	class_name = '${capital_name}Context'
+	kind_name = 'Kind${capital_name}'
+
+	include_template = (template 'parser.h') {
+	    'class_name': class_name
+	}
+	src_template = (template 'parser.cpp') {
+		'name': '${name}.h'
+		'module': module_name
+		'class_name': class_name
+		'kind_name': kind_name
+	}
+
+	kinds_path = 'include/${module_name}/kinds.h'
+	kinds_template = template 'kinds.h'
+	kinds = parse (read kinds_path) kinds_template 'kinds'
+	kinds = '${kinds}\n    ${kind_name},'
+
+	kinds_src = kinds_template {
+	    'kinds': kinds
+	}
+
+	write include_template include_path
+	write src_template src_path
+	write kinds_src kinds_path
+}
