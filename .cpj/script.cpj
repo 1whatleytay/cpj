@@ -46,6 +46,8 @@ cmake_add include source {
 }
 
 add name {
+	module_name = parse (read 'CMakeLists.txt') (template 'CMakeLists.txt') 'name'
+
 	include_path = 'include/${module_name}/${name}.h'
 	src_path = 'src/${name}.cpp'
 
@@ -62,15 +64,20 @@ add name {
 }
 
 parser name {
+	module_name = parse (read 'CMakeLists.txt') (template 'CMakeLists.txt') 'name'
+
 	include_path = 'include/${module_name}/${name}.h'
 	src_path = 'src/${name}.cpp'
 
 	cmake_add include_path src_path
 
+	0 = '0'
+	1 = '1'
+
 	real_name = lowercase name
 	capital_first_letter = uppercase (substr name 0 1)
-	lowercase_rest_name = substr name 1 (s (size name) 1
-	capital_name = '${capital_first_letter}${lowercase_rest_name)}'
+	lowercase_rest_name = substr name 1 (s (size name) 1)
+	capital_name = '${capital_first_letter}${lowercase_rest_name}'
 
 	class_name = '${capital_name}Context'
 	kind_name = 'Kind${capital_name}'

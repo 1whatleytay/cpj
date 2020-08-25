@@ -13,7 +13,7 @@ TemplateExpressionContext::TemplateExpressionContext(Context *parent) : Context(
     push<LiteralExpressionContext>();
 
     needs("{");
-    mark(MatchLevel::Strong);
+    level = MatchLevel::Strong;
 
     while (!next("}")) {
         push<StringContext>();

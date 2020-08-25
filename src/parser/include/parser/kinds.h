@@ -15,5 +15,5 @@ enum Kinds : size_t {
     KindReference,
     KindString,
     KindFor,
-    KindIf,
+    KindIf
 };

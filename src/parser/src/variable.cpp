@@ -5,8 +5,12 @@
 VariableContext::VariableContext(Context *parent) : Context(parent, KindVariable) {
     name = token();
 
+//    if (name == "lowercase_rest_name") {
+//        __asm("nop");
+//    }
+
     needs("=");
-    mark(MatchLevel::Strong);
+    level = MatchLevel::Strong;
 
     push<ExpressionContext>();
 }

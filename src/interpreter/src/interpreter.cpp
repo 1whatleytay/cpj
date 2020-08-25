@@ -77,11 +77,9 @@ namespace interpreter {
         try {
             return std::make_unique<RootContext>(state);
         } catch(const ParseError &error) {
-            std::string line, marker;
+            LineDetails details(state.text, error.index);
 
-            ParseError::lineDetails(state.text, state.index, line, marker);
-
-            fmt::print("{}\n{}\n{}\n", error.issue, line, marker);
+            fmt::print("{} [line {}]\n{}\n{}\n", error.issue, details.lineNumber + 1, details.line, details.marker);
 
             return nullptr;
         }
@@ -136,7 +134,7 @@ namespace interpreter {
         }
 
         if (!action)
-            throw std::runtime_error(fmt::format("Cannot find action {}.", name));
+            throw std::runtime_error(fmt::format("Cannot resolve reference to {}.", name));
 
         Locals locals;
 
@@ -313,11 +311,11 @@ namespace interpreter {
                 arguments.emplace_back(args[a]);
             }
 
-            try {
+//            try {
                 execute(script.get(), args[1], arguments);
-            } catch (const std::runtime_error &error) {
-                fmt::print("{}\n", error.what());
-            }
+//            } catch (const std::runtime_error &error) {
+//                fmt::print("{}\n", error.what());
+//            }
         }
     }
 }

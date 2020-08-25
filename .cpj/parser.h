@@ -4,4 +4,4 @@
 
 struct {{ class_name }} : public Context {
     explicit {{ class_name }}(Context *parent);
-}
+};

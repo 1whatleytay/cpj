@@ -15,7 +15,7 @@ StringContext::StringContext(Context *parent) : Context(parent, KindString) {
     popStoppable = alwaysStop;
 
     needs("'");
-    mark(MatchLevel::Strong);
+    level = MatchLevel::Strong;
 
     std::stringstream stream;
 
