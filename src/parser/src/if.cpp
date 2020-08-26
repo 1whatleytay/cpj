@@ -17,6 +17,7 @@ IfContext::IfContext(Context *parent) : Context(parent, KindIf) {
             link<IsContext>(),
             link<IfContext>(),
             link<ForContext>(),
+            link<ParseExpressionContext>(),
             link<VariableContext>(),
             link<ExpressionContext>()
         });

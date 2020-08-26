@@ -6,6 +6,10 @@ struct TemplateExpressionContext : public Context {
     explicit TemplateExpressionContext(Context *parent);
 };
 
+struct ParseExpressionContext : public Context {
+    explicit ParseExpressionContext(Context *parent);
+};
+
 struct LiteralExpressionContext : public Context {
     explicit LiteralExpressionContext(Context *parent);
 };

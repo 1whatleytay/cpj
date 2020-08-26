@@ -75,8 +75,12 @@ namespace interpreter::builtin {
         std::string templateValue = arguments[1];
         std::string point = arguments[2];
 
-        std::string value = language::parse(templateValue, fileValue, point);
-        return value;
+        std::unordered_map<std::string, std::string> map = language::parse(templateValue, fileValue);
+
+        if (map.find(point) == map.end())
+            throw std::runtime_error(fmt::format("Cannot find insert point {} in template.", point));
+
+        return map[point];
     }
 
     std::string directory(const Arguments &arguments) {

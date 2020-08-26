@@ -25,6 +25,7 @@ ActionContext::ActionContext(Context *parent) : Context(parent, KindAction) {
             link<IsContext>(),
             link<IfContext>(),
             link<ForContext>(),
+            link<ParseExpressionContext>(),
             link<VariableContext>(),
             link<ExpressionContext>()
         });

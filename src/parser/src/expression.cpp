@@ -24,6 +24,27 @@ TemplateExpressionContext::TemplateExpressionContext(Context *parent) : Context(
     }
 }
 
+ParseExpressionContext::ParseExpressionContext(Context *parent) : Context(parent, KindParseExpression) {
+    push<LiteralExpressionContext>();
+
+    needs("->");
+    level = MatchLevel::Strong;
+
+    popStoppable = notSpace;
+
+    push<LiteralExpressionContext>();
+
+    needs("{");
+
+    while (!next("}")) {
+        push<StringContext>();
+
+        needs(":");
+
+        push<ReferenceContext>();
+    }
+}
+
 LiteralExpressionContext::LiteralExpressionContext(Context *parent) : Context(parent, KindLiteralExpression) {
     if (next("(")) {
         push<ExpressionContext>();
@@ -37,7 +58,11 @@ LiteralExpressionContext::LiteralExpressionContext(Context *parent) : Context(pa
 }
 
 ExpressionContext::ExpressionContext(Context *parent) : Context(parent, KindExpression) {
-    if (push({ link<TemplateExpressionContext>(), link<StringContext>() }, true))
+    if (push({
+        link<TemplateExpressionContext>(),
+//        link<ParseExpressionContext>(),
+        link<StringContext>(),
+    }, true))
         return;
 
     popStoppable = onNewline;
@@ -50,6 +75,4 @@ ExpressionContext::ExpressionContext(Context *parent) : Context(parent, KindExpr
         push<LiteralExpressionContext>();
         popStoppable = notSpace;
     }
-
-    return;
 }

@@ -12,8 +12,9 @@ enum Kinds : size_t {
     KindExpression,
     KindLiteralExpression,
     KindTemplateExpression,
+    KindParseExpression,
     KindReference,
     KindString,
     KindFor,
-    KindIf
+    KindIf,
 };

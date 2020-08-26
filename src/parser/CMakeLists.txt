@@ -18,9 +18,7 @@ add_library(parser STATIC
     src/reference.cpp
     src/expression.cpp
     src/if.cpp
-    src/for.cpp
-
-    )
+    src/for.cpp)
 
 target_include_directories(parser PUBLIC include)
 target_link_libraries(parser PUBLIC hermes)

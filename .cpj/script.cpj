@@ -7,7 +7,9 @@ module name links... {
 	}
 
 	cmake_module_template = template 'CMakeLists.module.txt'
-	modules = parse (read 'CMakeLists.txt') cmake_module_template 'modules'
+	(read 'CMakeLists.txt') -> cmake_module_template {
+	    'modules': modules
+	}
 	modules = '${modules}\nadd_subdirectory(${name})'
 
 	cmake_module = cmake_module_template {
@@ -27,10 +29,12 @@ cmake_add include source {
 	cmake_template = template 'CMakeLists.txt'
     lists = read 'CMakeLists.txt'
 
-	module_name = parse lists cmake_template 'name'
-	includes = parse lists cmake_template 'includes'
-	sources = parse lists cmake_template 'sources'
-	links = parse lists cmake_template 'links'
+    lists -> cmake_template {
+        'name': module_name
+        'includes': includes
+        'sources': sources
+        'links': links
+    }
 
 	includes = '${includes}\n    ${include}'
 	sources = '${sources}\n    ${source}'
@@ -46,7 +50,7 @@ cmake_add include source {
 }
 
 add name {
-	module_name = parse (read 'CMakeLists.txt') (template 'CMakeLists.txt') 'name'
+	(read 'CMakeLists.txt') -> (template 'CMakeLists.txt') { 'name': module_name }
 
 	include_path = 'include/${module_name}/${name}.h'
 	src_path = 'src/${name}.cpp'
@@ -64,7 +68,7 @@ add name {
 }
 
 parser name {
-	module_name = parse (read 'CMakeLists.txt') (template 'CMakeLists.txt') 'name'
+	(read 'CMakeLists.txt') -> (template 'CMakeLists.txt') { 'name': module_name }
 
 	include_path = 'include/${module_name}/${name}.h'
 	src_path = 'src/${name}.cpp'
@@ -94,7 +98,7 @@ parser name {
 
 	kinds_path = 'include/${module_name}/kinds.h'
 	kinds_template = template 'kinds.h'
-	kinds = parse (read kinds_path) kinds_template 'kinds'
+	(read kinds_path) -> kinds_template { 'kinds': kinds }
 	kinds = '${kinds}\n    ${kind_name},'
 
 	kinds_src = kinds_template {

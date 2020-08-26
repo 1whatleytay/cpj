@@ -89,6 +89,8 @@ namespace interpreter {
     std::optional<std::string> execute(RootContext *root, Context *context, Locals &locals) {
         if (context->kind == KindExpression) {
             evaluate(root, context->as<ExpressionContext>(), locals);
+        } else if (context->kind == KindParseExpression) {
+            evaluate(root, context->as<ParseExpressionContext>(), locals);
         } else if (context->kind == KindIf) {
             if (evaluate(root, context->children[0]->as<LiteralExpressionContext>(), locals) == "true") {
                 for (size_t a = 1; a < context->children.size(); a++) {
@@ -235,6 +237,27 @@ namespace interpreter {
         }
 
         throw std::runtime_error("Unknown literal expression context kind.");
+    }
+
+
+    void evaluate(RootContext *root, ParseExpressionContext *context, Locals &locals) {
+        std::string content = evaluate(root, context->children[0]->as<LiteralExpressionContext>(), locals);
+        std::string templateExp = evaluate(root, context->children[1]->as<LiteralExpressionContext>(), locals);
+
+        std::unordered_map<std::string, std::string> map = language::parse(templateExp, content);
+
+        for (size_t a = 2; a < context->children.size(); a += 2) {
+            auto *string = context->children[a]->as<StringContext>();
+            auto *right = context->children[a + 1]->as<ReferenceContext>();
+
+            if (!string->inserts.empty())
+                throw std::runtime_error("Template expressions must have constant strings on left side.");
+
+            if (map.find(string->text) == map.end())
+                throw std::runtime_error(fmt::format("Cannot find insert {} in template.", string->text));
+
+            locals[right->name] = map[string->text];
+        }
     }
 
     std::string evaluate(RootContext *root, TemplateExpressionContext *templateExp, const Locals &locals) {

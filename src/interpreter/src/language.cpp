@@ -57,8 +57,8 @@ namespace interpreter::language {
         return stream.str();
     }
 
-    std::string parse(const std::string &templateValue,
-        const std::string &value, const std::string &point) {
+    std::unordered_map<std::string, std::string> parse(const std::string &templateValue, const std::string &value) {
+        std::unordered_map<std::string, std::string> result;
 
         State templateState(templateValue);
         State documentState(value);
@@ -97,14 +97,13 @@ namespace interpreter::language {
                 })
             );
 
-            if (expName == point)
-                return content;
+            result[expName] = content;
 
             documentState.pop(content.size(), always);
 
             before = after;
         }
 
-        throw std::runtime_error(fmt::format("Could not find point with name {} in template.", point));
+        return result;
     }
 }

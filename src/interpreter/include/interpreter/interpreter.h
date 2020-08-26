@@ -26,6 +26,7 @@ namespace interpreter {
     std::string evaluate(RootContext *root, StringContext *string, const Locals &locals);
     std::string evaluate(RootContext *root, ExpressionContext *context, const Locals &locals);
     std::string evaluate(RootContext *root, LiteralExpressionContext *context, const Locals &locals);
+    void evaluate(RootContext *root, ParseExpressionContext *context, Locals &locals);
     std::string evaluate(RootContext *root, TemplateExpressionContext *context, const Locals &locals);
 
     void run(int count, const char **args);

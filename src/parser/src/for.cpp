@@ -17,6 +17,7 @@ ForContext::ForContext(Context *parser) : Context(parser, KindFor) {
             link<IsContext>(),
             link<IfContext>(),
             link<ForContext>(),
+            link<ParseExpressionContext>(),
             link<VariableContext>(),
             link<ExpressionContext>()
         });

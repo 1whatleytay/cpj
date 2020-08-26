@@ -120,21 +120,23 @@ filled_in_template = (template `source.cpp`) {
 }
 ```
 
-## Using `parse`
-The parse action undoes a template expression.
+## Parse Expressions
+The parse expression undoes a template expression.
 It is generally used to parse existing files to manipulate the current values at the insert points.
-Parse is invoked like an action.
-
-Its first parameter of parse is the current value of the file.
-The second parameter is the template that the file is formatted with.
-Finally, the third parameter is the name of the insert point within the file that `parse` will evaluate to.
+A parse expression is invoked like a template expression with some extra syntax.
+Generally, the syntax is `content -> content_template { 'insert_name': output_variable_name }`.
 
 Example (prints `absolutely`)
 ```
 file = 'fish: yes, swimming: absolutely, taste: no'
 object = `fish: {{ a }}, swimming: {{ b }}, taste: {{ c }}`
 
-print (parse file object 'swimming')
+file -> object {
+  'fish': x
+  'swimming': y
+}
+
+print 'Is it a fish? ${x} Is it swimming: ${y}'
 ```
 
 ## Ifs and Fors
