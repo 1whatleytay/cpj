@@ -1,0 +1,5 @@
+{
+  "external": "external_script.cpj",
+  "src/interpreter": "x.cpj",
+  "src": "flobby.cpj"
+}

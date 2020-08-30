@@ -8,4 +8,4 @@ add_library(interpreter STATIC
     src/builtin.cpp)
 
 target_include_directories(interpreter PUBLIC include)
-target_link_libraries(interpreter PUBLIC parser fmt)
+target_link_libraries(interpreter PUBLIC parser fmt nlohmann_json::nlohmann_json)

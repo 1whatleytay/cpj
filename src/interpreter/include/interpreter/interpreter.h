@@ -17,6 +17,7 @@ namespace interpreter {
     std::string getProject();
 
     std::string getTemplate(const std::string &file);
+    std::string getConfig();
     std::string getScript();
 
     std::unique_ptr<RootContext> parseScript(const std::string &path);

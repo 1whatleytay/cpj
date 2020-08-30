@@ -60,7 +60,6 @@ LiteralExpressionContext::LiteralExpressionContext(Context *parent) : Context(pa
 ExpressionContext::ExpressionContext(Context *parent) : Context(parent, KindExpression) {
     if (push({
         link<TemplateExpressionContext>(),
-//        link<ParseExpressionContext>(),
         link<StringContext>(),
     }, true))
         return;

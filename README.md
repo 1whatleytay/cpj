@@ -163,3 +163,22 @@ uppercase_concat value1 value2 {
   is uppercase '${value1}${value2}'
 }
 ```
+
+## Configuring Subprojects
+Having to create .cpj folders in all your projects can be a pain.
+However, if you have multiple projects in one folder, you can `cpj init` in a parent folder and define separate scripts for sub-folders.
+This can also allow you to define different actions depending on where you are in your project.
+
+Run `` nano `cpj config` `` to start editing the config.json file (or use your text editor of choice).
+The config.json file is just an object with relative paths as keys and the name of the script files (relative to the project directory) as values.
+
+The default script file (if the path is not present in the config) will always be script.cpj.
+
+Example
+```json
+{
+  "src/interpreter": "interpreter-actions.cpj",
+  "src": "global-actions.cpj",
+  "external": "external-actions.cpj"
+}
+```

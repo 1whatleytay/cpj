@@ -13,14 +13,14 @@
 #include <fstream>
 #include <filesystem>
 #include <unordered_map>
-#include <parser/if.h>
-#include <parser/for.h>
+
+#include <nlohmann/json.hpp>
+
+using nlohmann::json;
 
 namespace fs = std::filesystem;
 
 namespace interpreter {
-
-
     void init() {
         fs::create_directory(".cpj");
     }
@@ -53,13 +53,68 @@ namespace interpreter {
         return filePath;
     }
 
+    std::string getConfig() {
+        std::string project = getProject();
+
+        if (project.empty())
+            return "";
+
+        fs::path filePath = fs::path(project) / "config.json";
+
+        if (!fs::exists(filePath))
+            std::ofstream stream(filePath);
+
+        return filePath;
+    }
+
     std::string getScript() {
         std::string project = getProject();
 
         if (project.empty())
             return "";
 
-        fs::path filePath = fs::path(project) / "script.cpj";
+        std::string configPath = fs::path(project) / "config.json";
+
+        std::string scriptName = "script.cpj";
+
+        if (fs::exists(configPath)) {
+            std::ifstream stream(configPath);
+            std::stringstream buffer;
+            buffer << stream.rdbuf();
+
+            json config = json::parse(buffer.str());
+
+            if (!config.is_object())
+                throw std::runtime_error("Root json object in config must be an object.");
+
+            size_t matchLevel = 0;
+            for (const auto &option : config.items()) {
+                if (!option.value().is_string())
+                    throw std::runtime_error("All values in config json object in config must be string paths.");
+
+                fs::path path(option.key());
+
+                fs::path result;
+
+                if (path.is_relative()) {
+                    result = fs::path(project).parent_path() / path;
+                } else {
+                    result = path;
+                }
+
+                std::string lexicalRelevance = result.lexically_relative(fs::current_path()).string();
+
+                std::string endingMark = "..";
+
+                if (lexicalRelevance.rfind(endingMark) == lexicalRelevance.size() - endingMark.size()
+                    && matchLevel <= lexicalRelevance.size()) {
+                    scriptName = option.value();
+                    matchLevel = lexicalRelevance.size();
+                }
+            }
+        }
+
+        fs::path filePath = fs::path(project) / scriptName;
 
         if (!fs::exists(filePath))
             std::ofstream stream(filePath);
@@ -302,6 +357,18 @@ namespace interpreter {
                 fmt::print("Initialize the project with `cpj init`\n");
             else
                 fmt::print("{}\n", result);
+        } else if (std::strcmp(args[1], "config") == 0) {
+            if (count != 2) {
+                fmt::print("Usage: cpj config\n");
+                return;
+            }
+
+            std::string result = getConfig();
+
+            if (result.empty())
+                fmt::print("Initialize the project with `cpj init`\n");
+            else
+                fmt::print("{}\n", result);
         } else if (std::strcmp(args[1], "template") == 0) {
             if (count != 3) {
                 fmt::print("Usage: cpj template <name>\n");
@@ -334,11 +401,11 @@ namespace interpreter {
                 arguments.emplace_back(args[a]);
             }
 
-//            try {
+            try {
                 execute(script.get(), args[1], arguments);
-//            } catch (const std::runtime_error &error) {
-//                fmt::print("{}\n", error.what());
-//            }
+            } catch (const std::runtime_error &error) {
+                fmt::print("{}\n", error.what());
+            }
         }
     }
 }
