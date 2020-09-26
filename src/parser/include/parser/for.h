@@ -2,6 +2,6 @@
 
 #include <parser/kinds.h>
 
-struct ForContext : public Context {
-    explicit ForContext(Context *parser);
+struct ForNode : public Node {
+    explicit ForNode(Node *parent);
 };

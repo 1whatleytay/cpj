@@ -139,6 +139,16 @@ namespace interpreter::builtin {
         return text;
     }
 
+    std::string system(const Arguments &arguments) {
+        ARG_COUNT(1);
+
+        // user is asking to invoke their shell, so i'm not worrying about std::system
+        std::string command = arguments[0];
+        int returnCode = std::system(command.c_str());
+
+        return std::to_string(returnCode);
+    }
+
     std::string expNot(const Arguments &arguments) {
         ARG_COUNT(1);
 
@@ -255,7 +265,7 @@ namespace interpreter::builtin {
         return (first && second) ? "true" : "false";
     }
 
-    std::string expTurnary(const Arguments &arguments) {
+    std::string expTernary(const Arguments &arguments) {
         ARG_COUNT(3);
 
         bool state = arguments[0] == "true";
@@ -276,6 +286,7 @@ namespace interpreter::builtin {
         { "size", size },
         { "uppercase", uppercase },
         { "lowercase", lowercase },
+        { "system", system },
         { "n", expNot },
         { "e", expEquals },
         { "ne", expNotEquals },
@@ -289,6 +300,6 @@ namespace interpreter::builtin {
         { "le", expLesserEquals },
         { "or", expOr },
         { "and", expAnd },
-        { "t", expTurnary }
+        { "t", expTernary }
     };
 }

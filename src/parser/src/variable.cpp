@@ -2,18 +2,14 @@
 
 #include <parser/expression.h>
 
-VariableContext::VariableContext(Context *parent) : Context(parent, KindVariable) {
+VariableNode::VariableNode(Node *parent) : Node(parent, Kinds::Variable) {
     name = token();
-
-//    if (name == "lowercase_rest_name") {
-//        __asm("nop");
-//    }
 
     needs("=");
     level = MatchLevel::Strong;
 
-    push<ExpressionContext>();
+    push<ExpressionNode>();
 }
 
-VariableContext::VariableContext(Context *parent, std::string name)
-    : Context(parent, KindVariable), name(std::move(name)) { }
+VariableNode::VariableNode(Node *parent, std::string name)
+    : Node(parent, Kinds::Variable), name(std::move(name)) { }

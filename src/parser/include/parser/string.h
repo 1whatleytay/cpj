@@ -2,10 +2,10 @@
 
 #include <parser/kinds.h>
 
-struct StringContext : public Context {
+struct StringNode : public Node {
     std::string text;
 
     std::vector<size_t> inserts;
 
-    explicit StringContext(Context *parent);
+    explicit StringNode(Node *parent);
 };

@@ -5,73 +5,95 @@
 
 bool onNewline(const char *text, size_t) {
     return *text == '\n' || !std::isspace(*text);
-};
+}
 
-TemplateExpressionContext::TemplateExpressionContext(Context *parent) : Context(parent, KindTemplateExpression) {
-    popStoppable = notSpace;
+TemplateExpressionNode::TemplateExpressionNode(Node *parent) : Node(parent, Kinds::TemplateExpression) {
+    spaceStoppable = notSpace;
 
-    push<LiteralExpressionContext>();
+    push<LiteralExpressionNode>();
 
-    needs("{");
-    level = MatchLevel::Strong;
+    match("{");
 
-    while (!next("}")) {
-        push<StringContext>();
+    while (!peek("}")) {
+        push<StringNode>();
 
         needs(":");
 
-        push<LiteralExpressionContext>();
+        push<LiteralExpressionNode>();
     }
+
+    needs("}");
 }
 
-ParseExpressionContext::ParseExpressionContext(Context *parent) : Context(parent, KindParseExpression) {
-    push<LiteralExpressionContext>();
+ParseExpressionNode::ParseExpressionNode(Node *parent) : Node(parent, Kinds::ParseExpression) {
+    push<LiteralExpressionNode>();
 
-    needs("->");
-    level = MatchLevel::Strong;
+    match("->");
 
-    popStoppable = notSpace;
+    spaceStoppable = notSpace;
 
-    push<LiteralExpressionContext>();
+    push<LiteralExpressionNode>();
 
     needs("{");
 
-    while (!next("}")) {
-        push<StringContext>();
+    while (!peek("}")) {
+        push<StringNode>();
 
         needs(":");
 
-        push<ReferenceContext>();
+        push<ReferenceNode>();
     }
+
+    needs("}");
 }
 
-LiteralExpressionContext::LiteralExpressionContext(Context *parent) : Context(parent, KindLiteralExpression) {
+ReplaceExpressionNode::ReplaceExpressionNode(Node *parent) : Node(parent, Kinds::ReplaceExpression) {
+    push<LiteralExpressionNode>();
+
+    match("=>");
+
+    spaceStoppable = notSpace;
+
+    push<LiteralExpressionNode>();
+
+    needs("{");
+
+    while (!peek("}")) {
+        push<StringNode>();
+
+        needs(":");
+
+        push<ReferenceNode>();
+
+        needs("as", true);
+
+        push<LiteralExpressionNode>();
+    }
+
+    needs("}");
+}
+
+LiteralExpressionNode::LiteralExpressionNode(Node *parent) : Node(parent, Kinds::LiteralExpression) {
     if (next("(")) {
-        push<ExpressionContext>();
+        push<ExpressionNode>();
         needs(")");
     } else {
-        push({
-            link<StringContext>(),
-            link<ReferenceContext>()
-        });
+        push<StringNode, ReferenceNode>();
     }
 }
 
-ExpressionContext::ExpressionContext(Context *parent) : Context(parent, KindExpression) {
-    if (push({
-        link<TemplateExpressionContext>(),
-        link<StringContext>(),
-    }, true))
+ExpressionNode::ExpressionNode(Node *parent) : Node(parent, Kinds::Expression) {
+    if (push<TemplateExpressionNode, ReplaceExpressionNode, StringNode>(true))
         return;
 
-    popStoppable = onNewline;
+    spaceStoppable = onNewline;
 
-    push<ReferenceContext>();
+    push<ReferenceNode>();
 
-    popStoppable = notSpace;
+    spaceStoppable = notSpace;
     while (!next("\n") && !peek(")") && !peek("}")) {
-        popStoppable = onNewline;
-        push<LiteralExpressionContext>();
-        popStoppable = notSpace;
+        spaceStoppable = onNewline;
+        push<LiteralExpressionNode>();
+        spaceStoppable = notSpace;
     }
 }

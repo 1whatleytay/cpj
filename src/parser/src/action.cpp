@@ -6,28 +6,22 @@
 #include <parser/variable.h>
 #include <parser/expression.h>
 
-ActionContext::ActionContext(Context *parent) : Context(parent, KindAction) {
+ActionNode::ActionNode(Node *parent) : Node(parent, Kinds::Action) {
     name = token();
 
-    while (!next("{")) {
+    while (!peek("{")) {
         params++;
-        push<VariableContext>(false, token());
+        push<VariableNode>(false, token());
 
         if (next("...")) {
             lastIsVariable = true;
-            needs("{");
             break;
         }
     }
 
-    while (!next("}")) {
-        push({
-            link<IsContext>(),
-            link<IfContext>(),
-            link<ForContext>(),
-            link<ParseExpressionContext>(),
-            link<VariableContext>(),
-            link<ExpressionContext>()
-        });
+    match("{");
+
+    while (!peek("}")) {
+        push<IsNode, IfNode, ForNode, ParseExpressionNode, VariableNode, ExpressionNode>();
     }
 }

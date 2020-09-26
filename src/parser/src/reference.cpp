@@ -1,5 +1,6 @@
 #include <parser/reference.h>
 
-ReferenceContext::ReferenceContext(Context *parent) : Context(parent, KindReference) {
+ReferenceNode::ReferenceNode(Node *parent) : Node(parent, Kinds::Reference) {
+    level = MatchLevel::Light;
     name = token();
 }

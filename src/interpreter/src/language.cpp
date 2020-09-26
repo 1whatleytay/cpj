@@ -10,8 +10,7 @@ using namespace hermes;
 
 namespace interpreter::language {
     bool openingBrackets(const char *text, size_t size) {
-        return size >= 2 && std::memcmp(text, "{{", 2) == 0
-            && !(size >= 3 && std::memcmp(text, "{{{", 3) == 0);
+        return size >= 2 && std::memcmp(text, "{{", 2) == 0;
     }
 
     bool closingBrackets(const char *text, size_t size) {
@@ -34,9 +33,16 @@ namespace interpreter::language {
         std::stringstream stream;
 
         while (state.index != state.text.size()) {
-            size_t size = state.until(openingBrackets);
+            size_t size;
+            size = state.until(openingBrackets);
             stream << state.pull(size);
             state.pop(size, notSpace);
+
+            if (state.pull(3) == "{{\\") {
+                stream << "{{";
+                state.pop(3, always);
+                continue;
+            }
 
             if (state.pull(2) != "{{")
                 break;
@@ -73,6 +79,11 @@ namespace interpreter::language {
 
             documentState.pop(before.size(), always);
             templateState.pop(before.size(), notSpace);
+
+            if (templateState.pull(3) == "{{\\") {
+                templateState.pop(3, always);
+                continue;
+            }
 
             if (templateState.pull(2) != "{{")
                 break;

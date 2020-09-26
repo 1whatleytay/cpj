@@ -2,10 +2,10 @@
 
 #include <parser/kinds.h>
 
-struct ActionContext : public Context {
+struct ActionNode : public Node {
     std::string name;
     size_t params = 0;
     bool lastIsVariable = false;
 
-    explicit ActionContext(Context *parent);
+    explicit ActionNode(Node *parent);
 };

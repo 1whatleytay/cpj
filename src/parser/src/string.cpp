@@ -4,15 +4,15 @@
 
 #include <sstream>
 
-bool alwaysStop(const char *value, size_t size) {
+bool alwaysStop(const char *, size_t) {
     return true;
 }
 
-StringContext::StringContext(Context *parent) : Context(parent, KindString) {
-    auto defaultPop = popStoppable;
+StringNode::StringNode(Node *parent) : Node(parent, Kinds::String) {
+    auto defaultPop = spaceStoppable;
 
     // do not skip text
-    popStoppable = alwaysStop;
+    spaceStoppable = alwaysStop;
 
     needs("'");
     level = MatchLevel::Strong;
@@ -30,17 +30,17 @@ StringContext::StringContext(Context *parent) : Context(parent, KindString) {
         stream << until({ "$", "\\", "'" });
 
         if (peek("'"))
-            popStoppable = defaultPop;
+            spaceStoppable = defaultPop;
 
         switch (select({"$", "\\", "'"})) {
             case Dollar:
-                stoppable = anyHard;
+                spaceStoppable = notSpace;
                 needs("{");
 
                 inserts.push_back(stream.str().size());
-                push<ExpressionContext>();
+                push<ExpressionNode>();
 
-                stoppable = alwaysStop;
+                spaceStoppable = alwaysStop;
                 needs("}");
 
                 break;

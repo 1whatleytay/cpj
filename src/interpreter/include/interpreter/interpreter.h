@@ -20,15 +20,16 @@ namespace interpreter {
     std::string getConfig();
     std::string getScript();
 
-    std::unique_ptr<RootContext> parseScript(const std::string &path);
+    std::unique_ptr<RootNode> parseScript(const std::string &path);
 
-    std::optional<std::string> execute(RootContext *root, Context *context, Locals &locals);
-    std::string execute(RootContext *root, const std::string &name, const Arguments &arguments);
-    std::string evaluate(RootContext *root, StringContext *string, const Locals &locals);
-    std::string evaluate(RootContext *root, ExpressionContext *context, const Locals &locals);
-    std::string evaluate(RootContext *root, LiteralExpressionContext *context, const Locals &locals);
-    void evaluate(RootContext *root, ParseExpressionContext *context, Locals &locals);
-    std::string evaluate(RootContext *root, TemplateExpressionContext *context, const Locals &locals);
+    std::optional<std::string> execute(RootNode *root, Node *context, Locals &locals);
+    std::string execute(RootNode *root, const std::string &name, const Arguments &arguments);
+    std::string evaluate(RootNode *root, StringNode *string, const Locals &locals);
+    std::string evaluate(RootNode *root, ExpressionNode *context, const Locals &locals);
+    std::string evaluate(RootNode *root, LiteralExpressionNode *context, const Locals &locals);
+    void evaluate(RootNode *root, ParseExpressionNode *context, Locals &locals);
+    std::string evaluate(RootNode *root, TemplateExpressionNode *context, const Locals &locals);
+    std::string evaluate(RootNode *root, ReplaceExpressionNode *context, const Locals &locals);
 
     void run(int count, const char **args);
 }

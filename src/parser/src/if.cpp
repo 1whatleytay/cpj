@@ -5,21 +5,23 @@
 #include <parser/variable.h>
 #include <parser/expression.h>
 
-IfContext::IfContext(Context *parent) : Context(parent, KindIf) {
-    needs("if", true);
+IfNode::IfNode(Node *parent) : Node(parent, Kinds::If) {
+    match("if", true);
 
-    push<LiteralExpressionContext>();
+    push<LiteralExpressionNode>();
 
     needs("{");
 
-    while (!next("}")) {
-        push({
-            link<IsContext>(),
-            link<IfContext>(),
-            link<ForContext>(),
-            link<ParseExpressionContext>(),
-            link<VariableContext>(),
-            link<ExpressionContext>()
-        });
+    while (!peek("}")) {
+        push<
+            IsNode,
+            IfNode,
+            ForNode,
+            ParseExpressionNode,
+            VariableNode,
+            ExpressionNode
+        >();
     }
+
+    needs("}");
 }

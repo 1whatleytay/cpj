@@ -1,20 +1,21 @@
 #pragma once
 
-#include <hermes/context.h>
+#include <hermes/node.h>
 
 using namespace hermes;
 
-enum Kinds : size_t {
-    KindIs,
-    KindRoot,
-    KindAction,
-    KindVariable,
-    KindExpression,
-    KindLiteralExpression,
-    KindTemplateExpression,
-    KindParseExpression,
-    KindReference,
-    KindString,
-    KindFor,
-    KindIf,
+enum class Kinds {
+    Is,
+    Root,
+    Action,
+    Variable,
+    Expression,
+    LiteralExpression,
+    TemplateExpression,
+    ParseExpression,
+    ReplaceExpression,
+    Reference,
+    String,
+    For,
+    If,
 };

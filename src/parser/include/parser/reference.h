@@ -2,8 +2,8 @@
 
 #include <parser/kinds.h>
 
-struct ReferenceContext : public Context {
+struct ReferenceNode : public Node {
     std::string name;
 
-    explicit ReferenceContext(Context *parent);
+    explicit ReferenceNode(Node *parent);
 };

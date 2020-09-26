@@ -122,7 +122,7 @@ namespace interpreter {
         return filePath;
     }
 
-    std::unique_ptr<RootContext> parseScript(const std::string &path) {
+    std::unique_ptr<RootNode> parseScript(const std::string &path) {
         std::ifstream stream(path);
         std::stringstream buffer;
         buffer << stream.rdbuf();
@@ -130,7 +130,7 @@ namespace interpreter {
         State state(buffer.str());
 
         try {
-            return std::make_unique<RootContext>(state);
+            return std::make_unique<RootNode>(state);
         } catch(const ParseError &error) {
             LineDetails details(state.text, error.index);
 
@@ -141,51 +141,69 @@ namespace interpreter {
     }
 
 
-    std::optional<std::string> execute(RootContext *root, Context *context, Locals &locals) {
-        if (context->kind == KindExpression) {
-            evaluate(root, context->as<ExpressionContext>(), locals);
-        } else if (context->kind == KindParseExpression) {
-            evaluate(root, context->as<ParseExpressionContext>(), locals);
-        } else if (context->kind == KindIf) {
-            if (evaluate(root, context->children[0]->as<LiteralExpressionContext>(), locals) == "true") {
-                for (size_t a = 1; a < context->children.size(); a++) {
-                    auto value = execute(root, context->children[0].get(), locals);
+    std::optional<std::string> execute(RootNode *root, Node *context, Locals &locals) {
+        switch (context->is<Kinds>()) {
+            case Kinds::Expression:
+                evaluate(root, context->as<ExpressionNode>(), locals);
+                break;
 
-                    if (value.has_value())
-                        return value.value();
+            case Kinds::ParseExpression:
+                evaluate(root, context->as<ParseExpressionNode>(), locals);
+                break;
+
+            case Kinds::If:
+                if (evaluate(root, context->children[0]->as<LiteralExpressionNode>(), locals) == "true") {
+                    for (size_t a = 1; a < context->children.size(); a++) {
+                        auto value = execute(root, context->children[0].get(), locals);
+
+                        if (value.has_value())
+                            return value.value();
+                    }
                 }
-            }
-        } else if (context->kind == KindFor) {
-            while (evaluate(root, context->children[0]->as<LiteralExpressionContext>(), locals) == "true") {
-                for (size_t a = 1; a < context->children.size(); a++) {
-                    auto value = execute(root, context->children[0].get(), locals);
 
-                    if (value.has_value())
-                        return value.value();
+                break;
+
+            case Kinds::For:
+                while (evaluate(root, context->children[0]->as<LiteralExpressionNode>(), locals) == "true") {
+                    for (size_t a = 1; a < context->children.size(); a++) {
+                        auto value = execute(root, context->children[0].get(), locals);
+
+                        if (value.has_value())
+                            return value.value();
+                    }
                 }
-            }
-        } else if (context->kind == KindVariable) {
-            std::string localName = context->as<VariableContext>()->name;
-            std::string result = evaluate(root, context->children[0]->as<ExpressionContext>(), locals);
 
-            locals[localName] = result;
-        } else if (context->kind == KindIs) {
-            return evaluate(root, context->children[0]->as<ExpressionContext>(), locals);
+                break;
+
+            case Kinds::Variable: {
+                std::string localName = context->as<VariableNode>()->name;
+                std::string result = evaluate(root, context->children[0]->as<ExpressionNode>(), locals);
+
+                locals[localName] = result;
+
+                break;
+            }
+
+            case Kinds::Is:
+                return evaluate(root, context->children[0]->as<ExpressionNode>(), locals);
+
+            default:
+                break;
         }
 
         return std::optional<std::string>();
     }
 
-    std::string execute(RootContext *root, const std::string &name, const std::vector<std::string> &arguments) {
+    std::string execute(RootNode *root, const std::string &name, const std::vector<std::string> &arguments) {
         if (builtin::functions.find(name) != builtin::functions.end())
             return builtin::functions[name](arguments);
 
-        ActionContext *action = nullptr;
-        for (const std::unique_ptr<Context> &context : root->children) {
-            std::string title = context->as<ActionContext>()->name;
+        ActionNode *action = nullptr;
+        for (const auto &context : root->children) {
+            std::string title = context->as<ActionNode>()->name;
 
             if (name == title) {
-                action = context->as<ActionContext>();
+                action = context->as<ActionNode>();
                 break;
             }
         }
@@ -211,7 +229,7 @@ namespace interpreter {
                 value = arguments[a];
             }
 
-            locals[action->children[a]->as<VariableContext>()->name] = value;
+            locals[action->children[a]->as<VariableNode>()->name] = value;
         }
 
         for (size_t a = action->params; a < action->children.size(); a++) {
@@ -219,7 +237,7 @@ namespace interpreter {
 
             auto value = execute(root, context.get(), locals);
 
-            // an is experession was hit
+            // an is expression was hit
             if (value.has_value())
                 return value.value();
         }
@@ -227,7 +245,7 @@ namespace interpreter {
         return "";
     }
 
-    std::string evaluate(RootContext *root, StringContext *string, const Locals &locals) {
+    std::string evaluate(RootNode *root, StringNode *string, const Locals &locals) {
         std::stringstream stream;
 
         size_t lastInsert = 0;
@@ -236,7 +254,7 @@ namespace interpreter {
             stream << string->text.substr(lastInsert, string->inserts[a] - lastInsert);
             lastInsert = string->inserts[a];
 
-            stream << evaluate(root, string->children[a]->as<ExpressionContext>(), locals);
+            stream << evaluate(root, string->children[a]->as<ExpressionNode>(), locals);
         }
 
         stream << string->text.substr(lastInsert, string->text.size() - lastInsert);
@@ -244,66 +262,83 @@ namespace interpreter {
         return stream.str();
     }
 
-    std::string evaluate(RootContext *root, ExpressionContext *expression, const Locals &locals) {
-        auto &first = expression->children[0];
+    std::string evaluate(RootNode *root, ExpressionNode *expression, const Locals &locals) {
+        auto &first = expression->children.front();
 
-        if (first->kind == KindString) {
-            return evaluate(root, first->as<StringContext>(), locals);
-        } else if (first->kind == KindTemplateExpression) {
-            return evaluate(root, first->as<TemplateExpressionContext>(), locals);
-        } else if (first->kind == KindReference) {
-            std::string name = first->as<ReferenceContext>()->name;
+        switch (first->is<Kinds>()) {
+            case Kinds::String:
+                return evaluate(root, first->as<StringNode>(), locals);
 
-            if (expression->children.size() == 1 && locals.find(name) != locals.end()) {
-                return locals.at(name);
-            } else {
-                std::vector<std::string> arguments;
-                arguments.reserve(expression->children.size() - 1);
+            case Kinds::TemplateExpression:
+                return evaluate(root, first->as<TemplateExpressionNode>(), locals);
 
-                for (size_t a = 1; a < expression->children.size(); a++) {
-                    auto &child = expression->children[a];
+            case Kinds::ReplaceExpression:
+                return evaluate(root, first->as<ReplaceExpressionNode>(), locals);
 
-                    assert(child->kind == KindLiteralExpression);
+            case Kinds::Reference: {
+                std::string name = first->as<ReferenceNode>()->name;
 
-                    arguments.push_back(evaluate(root, child->as<LiteralExpressionContext>(), locals));
+                if (expression->children.size() == 1 && locals.find(name) != locals.end()) {
+                    return locals.at(name);
+                } else {
+                    std::vector<std::string> arguments;
+                    arguments.reserve(expression->children.size() - 1);
+
+                    for (size_t a = 1; a < expression->children.size(); a++) {
+                        auto &child = expression->children[a];
+
+                        assert(child->is(Kinds::LiteralExpression));
+
+                        arguments.push_back(evaluate(root, child->as<LiteralExpressionNode>(), locals));
+                    }
+
+                    return execute(root, name, arguments);
                 }
-
-                return execute(root, name, arguments);
             }
+
+            default:
+                break;
         }
 
         throw std::runtime_error("Unknown expression first kind.");
     }
 
-    std::string evaluate(RootContext *root, LiteralExpressionContext *literal, const Locals &locals) {
+    std::string evaluate(RootNode *root, LiteralExpressionNode *literal, const Locals &locals) {
         auto &sub = literal->children[0];
 
-        if (sub->kind == KindExpression) {
-            return evaluate(root, sub->as<ExpressionContext>(), locals);
-        } else if (sub->kind == KindReference) {
-            std::string referenceName = sub->as<ReferenceContext>()->name;
+        switch (sub->is<Kinds>()) {
+            case Kinds::Expression:
+                return evaluate(root, sub->as<ExpressionNode>(), locals);
 
-            if (locals.find(referenceName) == locals.end())
-                throw std::runtime_error(fmt::format("Could not find {} in locals.", referenceName));
+            case Kinds::Reference: {
+                std::string referenceName = sub->as<ReferenceNode>()->name;
 
-            return locals.at(referenceName);
-        } else if (sub->kind == KindString) {
-            return evaluate(root, sub->as<StringContext>(), locals);
+                if (locals.find(referenceName) == locals.end())
+                    throw std::runtime_error(fmt::format("Could not find {} in locals.", referenceName));
+
+                return locals.at(referenceName);
+            }
+
+            case Kinds::String:
+                return evaluate(root, sub->as<StringNode>(), locals);
+
+            default:
+                break;
         }
 
         throw std::runtime_error("Unknown literal expression context kind.");
     }
 
 
-    void evaluate(RootContext *root, ParseExpressionContext *context, Locals &locals) {
-        std::string content = evaluate(root, context->children[0]->as<LiteralExpressionContext>(), locals);
-        std::string templateExp = evaluate(root, context->children[1]->as<LiteralExpressionContext>(), locals);
+    void evaluate(RootNode *root, ParseExpressionNode *context, Locals &locals) {
+        std::string content = evaluate(root, context->children[0]->as<LiteralExpressionNode>(), locals);
+        std::string templateExp = evaluate(root, context->children[1]->as<LiteralExpressionNode>(), locals);
 
         std::unordered_map<std::string, std::string> map = language::parse(templateExp, content);
 
         for (size_t a = 2; a < context->children.size(); a += 2) {
-            auto *string = context->children[a]->as<StringContext>();
-            auto *right = context->children[a + 1]->as<ReferenceContext>();
+            auto *string = context->children[a]->as<StringNode>();
+            auto *right = context->children[a + 1]->as<ReferenceNode>();
 
             if (!string->inserts.empty())
                 throw std::runtime_error("Template expressions must have constant strings on left side.");
@@ -315,14 +350,14 @@ namespace interpreter {
         }
     }
 
-    std::string evaluate(RootContext *root, TemplateExpressionContext *templateExp, const Locals &locals) {
-        std::string value = evaluate(root, templateExp->children[0]->as<LiteralExpressionContext>(), locals);
+    std::string evaluate(RootNode *root, TemplateExpressionNode *templateExp, const Locals &locals) {
+        std::string value = evaluate(root, templateExp->children[0]->as<LiteralExpressionNode>(), locals);
 
         std::unordered_map<std::string, std::string> replacements;
 
         for (size_t a = 1; a < templateExp->children.size(); a += 2) {
-            auto *string = templateExp->children[a]->as<StringContext>();
-            auto *right = templateExp->children[a + 1]->as<LiteralExpressionContext>();
+            auto *string = templateExp->children[a]->as<StringNode>();
+            auto *right = templateExp->children[a + 1]->as<LiteralExpressionNode>();
 
             if (!string->inserts.empty())
                 throw std::runtime_error("Template expressions must have constant strings on left side.");
@@ -330,8 +365,32 @@ namespace interpreter {
             replacements[string->text] = evaluate(root, right, locals);
         }
 
-        std::string x = language::replace(value, replacements);
-        return x;
+        return language::replace(value, replacements);
+    }
+
+    std::string evaluate(RootNode *root, ReplaceExpressionNode *context, const Locals &locals) {
+        std::string content = evaluate(root, context->children[0]->as<LiteralExpressionNode>(), locals);
+        std::string templateExp = evaluate(root, context->children[1]->as<LiteralExpressionNode>(), locals);
+
+        Locals subLocals = locals;
+        std::unordered_map<std::string, std::string> map = language::parse(templateExp, content);
+
+        for (size_t a = 2; a < context->children.size(); a += 3) {
+            auto *string = context->children[a]->as<StringNode>();
+            auto *name = context->children[a + 1]->as<ReferenceNode>();
+            auto *right = context->children[a + 2]->as<LiteralExpressionNode>();
+
+            if (!string->inserts.empty())
+                throw std::runtime_error("Template expressions must have constant strings on left side.");
+
+            if (map.find(string->text) == map.end())
+                throw std::runtime_error(fmt::format("Cannot find insert {} in template.", string->text));
+
+            subLocals[name->name] = map[string->text];
+            map[string->text] = evaluate(root, right, subLocals);
+        }
+
+        return language::replace(templateExp, map);
     }
 
     void run(int count, const char **args) {
@@ -390,7 +449,7 @@ namespace interpreter {
                 return;
             }
 
-            std::unique_ptr<RootContext> script = parseScript(path);
+            std::unique_ptr<RootNode> script = parseScript(path);
             if (!script)
                 return;
 

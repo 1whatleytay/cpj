@@ -2,6 +2,6 @@
 
 #include <parser/kinds.h>
 
-struct RootContext : public Context {
-    explicit RootContext(State &state);
+struct RootNode : public Node {
+    explicit RootNode(State &state);
 };

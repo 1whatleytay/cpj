@@ -2,6 +2,6 @@
 
 #include <parser/kinds.h>
 
-struct IfContext : public Context {
-    explicit IfContext(Context *parent);
+struct IfNode : public Node {
+    explicit IfNode(Node *parent);
 };

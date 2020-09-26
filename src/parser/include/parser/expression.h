@@ -2,18 +2,22 @@
 
 #include <parser/kinds.h>
 
-struct TemplateExpressionContext : public Context {
-    explicit TemplateExpressionContext(Context *parent);
+struct TemplateExpressionNode : public Node {
+    explicit TemplateExpressionNode(Node *parent);
 };
 
-struct ParseExpressionContext : public Context {
-    explicit ParseExpressionContext(Context *parent);
+struct ParseExpressionNode : public Node {
+    explicit ParseExpressionNode(Node *parent);
 };
 
-struct LiteralExpressionContext : public Context {
-    explicit LiteralExpressionContext(Context *parent);
+struct ReplaceExpressionNode : public Node {
+    explicit ReplaceExpressionNode(Node *parent);
 };
 
-struct ExpressionContext : public Context {
-    explicit ExpressionContext(Context *parent);
+struct LiteralExpressionNode : public Node {
+    explicit LiteralExpressionNode(Node *parent);
+};
+
+struct ExpressionNode : public Node {
+    explicit ExpressionNode(Node *parent);
 };

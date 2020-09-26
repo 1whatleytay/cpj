@@ -2,8 +2,8 @@
 
 #include <parser/expression.h>
 
-IsContext::IsContext(Context *parent) : Context(parent, KindIs) {
-    needs("is", true);
+IsNode::IsNode(Node *parent) : Node(parent, Kinds::Is) {
+    match("is", true);
 
-    push<ExpressionContext>();
+    push<ExpressionNode>();
 }
