@@ -20,7 +20,7 @@ namespace interpreter {
     std::string getConfig();
     std::string getScript();
 
-    std::unique_ptr<RootNode> parseScript(const std::string &path);
+    std::optional<RootNode> parseScript(const std::string &path);
 
     std::optional<std::string> execute(RootNode *root, Node *context, Locals &locals);
     std::string execute(RootNode *root, const std::string &name, const Arguments &arguments);

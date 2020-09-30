@@ -139,6 +139,19 @@ file -> object {
 print 'Is it a fish? ${x} Is it swimming: ${y}'
 ```
 
+## Replace Expressions
+The replace expression is a combination of the parse and template expression.
+It is helped for making expression that will work with any template, or changing only one section of a template.
+The syntax is similar to parse, except with an equal arrow instead `=>`.
+Every entry in the template object follows the syntax of `'insert_name': temp_variable_name as (expression)`.
+
+Example, changes the 'name' template insert into an uppercase version of itself.
+```
+write ((read 'CMakeLists.txt') => (template 'source.cmake') {
+    'name': name as (uppercase name)
+}) 'CMakeLists.txt'
+```
+
 ## Ifs and Fors
 Ifs and for statements can be defined as follows:
 ```
@@ -181,4 +194,13 @@ Example
   "src": "global-actions.cpj",
   "external": "external-actions.cpj"
 }
+```
+
+## Evaluating an expression on CLI
+You can use the `eval` command on the CLI to evaluate an expression.
+You can also call methods from your current script with more specific parameters.
+
+```
+cpj eval "write ((template 'submodule.cmake') { 'name': 'app' }) 'CMakeLists.txt'"
+cpj eval "modify_with_template (template 'test.txt')"
 ```

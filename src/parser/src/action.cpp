@@ -24,4 +24,6 @@ ActionNode::ActionNode(Node *parent) : Node(parent, Kinds::Action) {
     while (!peek("}")) {
         push<IsNode, IfNode, ForNode, ParseExpressionNode, VariableNode, ExpressionNode>();
     }
+
+    needs("}");
 }

@@ -122,7 +122,7 @@ namespace interpreter {
         return filePath;
     }
 
-    std::unique_ptr<RootNode> parseScript(const std::string &path) {
+    std::optional<RootNode> parseScript(const std::string &path) {
         std::ifstream stream(path);
         std::stringstream buffer;
         buffer << stream.rdbuf();
@@ -130,13 +130,14 @@ namespace interpreter {
         State state(buffer.str());
 
         try {
-            return std::make_unique<RootNode>(state);
+            return std::optional<RootNode>(state);
         } catch(const ParseError &error) {
             LineDetails details(state.text, error.index);
 
-            fmt::print("{} [line {}]\n{}\n{}\n", error.issue, details.lineNumber + 1, details.line, details.marker);
+            fmt::print("{} [line {}]\n{}\n{}\n",
+                       error.issue, details.lineNumber + 1, details.line, details.marker);
 
-            return nullptr;
+            return std::optional<RootNode>();
         }
     }
 
@@ -442,6 +443,43 @@ namespace interpreter {
                 fmt::print("Initialize the project with `cpj init`\n");
             else
                 fmt::print("{}\n", result);
+        } else if (std::strcmp(args[1], "eval") == 0) {
+            if (count != 3) {
+                fmt::print("Usage: cpj template <name>\n");
+                return;
+            }
+
+            std::string expression = args[2];
+
+            std::string path = getScript();
+            if (path.empty()) {
+                fmt::print("Initialize the project with `cpj init`\n");
+                return;
+            }
+
+            std::optional<RootNode> script = parseScript(path);
+            if (!script)
+                return;
+
+            State state(expression);
+            Node parent(state);
+
+            try {
+                ExpressionNode node(&parent);
+
+                try {
+                    std::string value = evaluate(&script.value(), &node, { });
+
+                    fmt::print("{}\n", value.empty() ? "Empty output." : value);
+                } catch (const std::runtime_error &error) {
+                    fmt::print("{}\n", error.what());
+                }
+            } catch (const ParseError &error) {
+                LineDetails details(state.text, error.index);
+
+                fmt::print("{} [line {}]\n{}\n{}\n",
+                           error.issue, details.lineNumber + 1, details.line, details.marker);
+            }
         } else {
             std::string path = getScript();
             if (path.empty()) {
@@ -449,7 +487,7 @@ namespace interpreter {
                 return;
             }
 
-            std::unique_ptr<RootNode> script = parseScript(path);
+            std::optional<RootNode> script = parseScript(path);
             if (!script)
                 return;
 
@@ -461,7 +499,7 @@ namespace interpreter {
             }
 
             try {
-                execute(script.get(), args[1], arguments);
+                execute(&script.value(), args[1], arguments);
             } catch (const std::runtime_error &error) {
                 fmt::print("{}\n", error.what());
             }

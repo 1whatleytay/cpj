@@ -91,7 +91,7 @@ ExpressionNode::ExpressionNode(Node *parent) : Node(parent, Kinds::Expression) {
     push<ReferenceNode>();
 
     spaceStoppable = notSpace;
-    while (!next("\n") && !peek(")") && !peek("}")) {
+    while (!end() && !next("\n") && !peek(")") && !peek("}")) {
         spaceStoppable = onNewline;
         push<LiteralExpressionNode>();
         spaceStoppable = notSpace;
