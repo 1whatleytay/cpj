@@ -19,7 +19,7 @@ StringNode::StringNode(Node *parent) : Node(parent, Kinds::String) {
 
     std::stringstream stream;
 
-    enum BreakChars {
+    enum class BreakChars {
         Dollar,
         Backslash,
         Quote,
@@ -32,8 +32,8 @@ StringNode::StringNode(Node *parent) : Node(parent, Kinds::String) {
         if (peek("'"))
             spaceStoppable = defaultPop;
 
-        switch (select({"$", "\\", "'"})) {
-            case Dollar:
+        switch (select<BreakChars>({"$", "\\", "'"})) {
+            case BreakChars::Dollar:
                 spaceStoppable = notSpace;
                 needs("{");
 
@@ -45,29 +45,33 @@ StringNode::StringNode(Node *parent) : Node(parent, Kinds::String) {
 
                 break;
 
-            case Backslash: {
-                enum SpecialChars {
+            case BreakChars::Backslash: {
+                enum class SpecialChars {
                     NewLine,
                     Tab,
                     DollarSign,
+                    Quote,
                 };
 
-                switch (select({ "n", "t", "$" })) {
-                    case NewLine:
+                switch (select<SpecialChars>({ "n", "t", "$", "'" })) {
+                    case SpecialChars::NewLine:
                         stream << "\n";
                         break;
-                    case Tab:
+                    case SpecialChars::Tab:
                         stream << "\t";
                         break;
-                    case DollarSign:
+                    case SpecialChars::DollarSign:
                         stream << "$";
+                        break;
+                    case SpecialChars::Quote:
+                        stream << "'";
                         break;
                 }
 
                 break;
             }
 
-            case Quote:
+            case BreakChars::Quote:
                 loop = false;
                 break;
         }
